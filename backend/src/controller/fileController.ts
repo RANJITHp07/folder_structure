@@ -28,10 +28,18 @@ export async function createFile(req: Request, res: Response, next: NextFunction
 
 export async function addChildToFile(req:Request,res:Response,next:NextFunction): Promise<void> {
     try {
-    const {fileId,childId}=req.body
+    const {fileId, name, type,extension}=req.body
+
+    const newFile: IFile = await FileModel.create({
+        name,
+        type,
+        extension,
+        children:[]
+      });
+
      const addChild= await FileModel.findByIdAndUpdate(
         { _id: fileId },
-        { $push: { children: childId } }
+        { $push: { children: newFile._id } }
       );
       if(addChild){
           res.status(200).json({
