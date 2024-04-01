@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-const allowedExtensions = ['text', 'docx', 'pdf'] as const;
+const allowedExtensions = ['txt', 'docx', 'pdf'] as const;
 type AllowedExtension = typeof allowedExtensions[number];
 
 // Define interface for File document
@@ -16,7 +16,7 @@ const fileSchema: Schema<IFile> = new Schema<IFile>({
   name: { type: String, required: true },
   type: { type: Number, required: true },
   extension: { type: String, enum: allowedExtensions, default: null },
-  children: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Folder' }],
+  children: [{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }],
 });
 
 

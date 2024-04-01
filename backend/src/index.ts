@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
 import { db } from './db';
+import fileRoute from './route/fileRoute'
 
 
 dotenv.config();
@@ -18,9 +19,8 @@ app.use(cors());
 app.use(helmet());
 
 
-
-
-
+// routes
+app.use(fileRoute)
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
