@@ -75,11 +75,11 @@ function SideBar() {
         const data= await Api.post('/addFile',{name:fileName,type:1,extension:1});
         setFiles(data.data.data)
       }else{
-        console.log("set a parent folder")
+        alert("set a parent folder")
       }
     }else{
 
-      console.log("Invalid extension")
+      alert("Invalid extension")
     }
 
   }
