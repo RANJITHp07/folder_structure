@@ -10,7 +10,8 @@ import CloseIcon from '@mui/icons-material/Close';
 const allowedExtensions = ['txt', 'docx', 'pdf'] as const;
 type AllowedExtension = typeof allowedExtensions[number];
 
-interface File {
+export interface File {
+  _id:string,
   name: string;
   type: number;
   extension: AllowedExtension | null;
@@ -27,18 +28,18 @@ function SideBar() {
   const [parentFolderId, setParentFolderId] = useState<string | null>(null);
   const [currentFolderId,setCurrentFolder]=useState<string | null>(null);
   const [createfolder,setcreateFolder]=useState<string | null>(null);
-  
+  const [deleteId,setDeleteId]=useState<string[]>([])
 
   useEffect(()=>{
     const fetchData=async()=>{
       try{
         const id=localStorage.getItem("parentFolder")
-        const data= await Api.get(`/getFiles/${"660b379279454d250163ddc0"}`);
+        const data= await Api.get(`/getFiles/${id}`);
         if(data.data.success){
           setFiles(data.data.data)
           setSelectedFileId(data.data.data._id);
           setParentFolderId(data.data.data._id);
-            setCurrentFolder(data.data.data._id);
+          setCurrentFolder(data.data.data._id);
         }
       }catch(err){
         console.log(err)
@@ -64,6 +65,9 @@ function SideBar() {
     const data= await Api.post('/addFile',{name:fileName,type:1});
     setFiles(data.data.data)
     localStorage.setItem("parentFolder",data.data.data._id)
+    setSelectedFileId(data.data.data._id);
+    setParentFolderId(data.data.data._id);
+    setCurrentFolder(data.data.data._id);
   }else{
     const extension= fileName.split('.')[1];
     if(['txt', 'docx', 'pdf'].includes(extension)){
@@ -87,6 +91,23 @@ function SideBar() {
   }
 };
 
+
+
+
+const handleFiles = (id :string ,type:boolean) => {
+  try {
+    setDeleteId((prev)=>([...prev,id]));
+    if(type){
+     setFiles(null);
+     setType(null)
+
+  }
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+
   return (
     <div className='text-white'>
         <div className='flex justify-between items-center p-2'>
@@ -96,7 +117,6 @@ function SideBar() {
               {
                 setType('folder');
                 setcreateFolder('folder')
-                console.log(parentFolderId)
               }
               }/>
             <NoteAddIcon className='mx-2 cursor-pointer text-m' onClick={()=>
@@ -109,7 +129,7 @@ function SideBar() {
         <hr/>
         <div className='my-4'>
         {
-          files ? <Files data={files} selectedFileId={selectedFileId} onSelect={handleFileClick} parentFolderId={parentFolderId} createfolder={createfolder} currentFolderId={currentFolderId}/>:
+          files ? <Files data={files} selectedFileId={selectedFileId} onSelect={handleFileClick} parentFolderId={parentFolderId} createfolder={createfolder} currentFolderId={currentFolderId} handleFiles={handleFiles} deleteId={deleteId}/>:
           (type &&
             <div className='mx-auto'>
             <input className='mx-2 bg-slate-600 rounded-md p-1 w-3/4' placeholder={`${type === 'folder' ? 'Folder name' : ' File name'}`} onChange={(e:ChangeEvent<HTMLInputElement>) => setFileName(e.target.value)}

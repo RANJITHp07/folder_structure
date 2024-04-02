@@ -4,12 +4,17 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import FolderIcon from '@mui/icons-material/Folder';
 import CloseIcon from '@mui/icons-material/Close';
 import Api from '../utils/Api';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
+import ArticleIcon from '@mui/icons-material/Article';
+import { File } from './sideBar';
 
-function Files({ data, selectedFileId, onSelect, parentFolderId,createfolder,currentFolderId}: { data: any; selectedFileId: string | null; onSelect: (fileId: string, parentFolderId: string | null,type:number) => void; parentFolderId: string | null, createfolder:string | null, currentFolderId: string | null }) {
-    const [children,setchildren]=useState(data.children)
+
+function Files({ data, selectedFileId, onSelect, parentFolderId,createfolder,currentFolderId ,handleFiles,deleteId}: { data: File; selectedFileId: string | null; onSelect: (fileId: string, parentFolderId: string | null,type:number) => void; parentFolderId: string | null, createfolder:string | null, currentFolderId: string | null, handleFiles: (id:string , type :boolean)=>void , deleteId: string[]}) {
+  const [children,setchildren]=useState(data.children)
    const [open,setOpen]=useState(false)
     const [fileName,setFileName]=useState('')
-    const [deleteChild,setDeleteChild]=useState('')
+
 
     
     const handleFileClick = () => {
@@ -21,11 +26,18 @@ function Files({ data, selectedFileId, onSelect, parentFolderId,createfolder,cur
     //to delete the folder
      const handleDelete=async()=>{
         try{
-            const deletFile={fileId:parentFolderId,childId:data._id}
-            const res= await Api.post('/removeChildFile',deletFile);
-            if(res.data.success){
-              setDeleteChild(data._id)
-            }
+           const parentId=localStorage.getItem("parentFolder")
+              const deletFile={fileId:parentFolderId,childId:data._id,parentId:parentId}
+              const res= await Api.post('/removeChildFile',deletFile);
+              if(res.data.success){
+                 handleFiles(data._id,false);
+                 onSelect(res.data.data.parent,res.data.data.grandparent,data.type);
+              }else{
+                localStorage.removeItem("parentFolder")
+                handleFiles(data._id,true);
+                onSelect(res.data.data.parent,res.data.data.grandparent,data.type);
+              }
+            
         }catch(err){
             console.log(err)
         }
@@ -66,20 +78,33 @@ function Files({ data, selectedFileId, onSelect, parentFolderId,createfolder,cur
         }
       };
 
+      //to handle the icons
+      const getFileIcon = (extension: string) => {
+        switch (extension) {
+            case 'pdf':
+                return <PictureAsPdfIcon className='mx-2'/>;
+            case 'txt':
+                return <TextFieldsIcon className='mx-2'/>;
+            case 'docx':
+                return <ArticleIcon className='mx-2'/>;
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div className={`mx-2 ${deleteChild===data._id}`}>
-            <div  className={`cursor-pointer flex justify-between  items-center p-1 ${selectedFileId === data._id ? 'border-2 border-blue-200 rounded-md px-2' : ''}`}>
-            <p
-                onClick={handleFileClick}
-            >
-                {data.type === 1 && (
-                    <span className="mr-1 text-xs">{data.children ? (open || (createfolder && currentFolderId=== data._id) ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />) : null}</span>
-                )}
-                {data.type === 1 && <FolderIcon className="mr-1" />}
-                {data.name}
-                <span>{data.extension && `.${data.extension}`}</span>
-            </p>
-            <CloseIcon onClick={()=>handleDelete()} className='text-xs'/>
+        <div className={`mx-2 ${deleteId.includes(data._id) && 'hidden'}`}>
+            <div className={`cursor-pointer flex justify-between  items-center p-1 ${selectedFileId === data._id ? 'border-2 border-blue-200 rounded-md px-2' : ''}`}>
+                <p onClick={handleFileClick}>
+                    {data.type === 1 && (
+                        <span className="mr-1 text-xs">{data.children ? (open || (createfolder && currentFolderId === data._id) ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />) : null}</span>
+                    )}
+                    {data.type === 1 && <FolderIcon className="mr-1" />}
+                    {getFileIcon(data.extension!)}
+                    {data.name}
+                    <span>{data.extension && `.${data.extension}`}</span>
+                </p>
+                <CloseIcon onClick={() => handleDelete()} className='text-xs' />
             </div>
             {currentFolderId=== data._id && createfolder &&  (
                 <input className='mx-2 bg-slate-600 rounded-md p-1 w-3/4 my-2' placeholder={`${createfolder === 'folder' ? 'Folder name' : ' File name'}`} onChange={(e:ChangeEvent<HTMLInputElement>) => setFileName(e.target.value)}
@@ -88,7 +113,7 @@ function Files({ data, selectedFileId, onSelect, parentFolderId,createfolder,cur
             {children && (open || createfolder) && (
                 <div className="ml-2">
                     {children.map((child: any) => (
-                        <Files key={child._id} data={child} selectedFileId={selectedFileId} onSelect={onSelect} parentFolderId={data._id} createfolder={createfolder}  currentFolderId={currentFolderId}/>
+                        <Files key={child._id} data={child} selectedFileId={selectedFileId} onSelect={onSelect} parentFolderId={data._id} createfolder={createfolder}  currentFolderId={currentFolderId} handleFiles={handleFiles} deleteId={deleteId}/>
                     ))}
                 </div>
             )}
