@@ -8,7 +8,7 @@ export default function Home() {
         <SideBar/>
       </div>
       <div className="w-3/4 bg-slate-700">
-
+          
       </div>
     </div>
   );

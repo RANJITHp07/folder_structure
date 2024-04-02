@@ -4,24 +4,36 @@ import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import Api from '../utils/Api';
 import Files from './Files';
+import CloseIcon from '@mui/icons-material/Close';
+
+
+const allowedExtensions = ['txt', 'docx', 'pdf'] as const;
+type AllowedExtension = typeof allowedExtensions[number];
+
+interface File {
+  name: string;
+  type: number;
+  extension: AllowedExtension | null;
+  children: File[]
+}
 
 
 function SideBar() {
 
-  const [files,setFiles]=useState()
+  const [files,setFiles]=useState<File | null>()
   const [fileName,setFileName]=useState('')
   const [type,setType]=useState<string | null>(null)
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [parentFolderId, setParentFolderId] = useState<string | null>(null);
   const [currentFolderId,setCurrentFolder]=useState<string | null>(null);
-  const [createfolder,setcreateFolder]=useState<boolean>(false);
+  const [createfolder,setcreateFolder]=useState<string | null>(null);
   
 
   useEffect(()=>{
     const fetchData=async()=>{
       try{
         const id=localStorage.getItem("parentFolder")
-        const data= await Api.get(`/getFiles/${id}`);
+        const data= await Api.get(`/getFiles/${"660b379279454d250163ddc0"}`);
         if(data.data.success){
           setFiles(data.data.data)
           setSelectedFileId(data.data.data._id);
@@ -36,9 +48,10 @@ function SideBar() {
   },[])
 
   const handleFileClick = (fileId: string, parentFolderId: string | null,type:number) => {
-    setSelectedFileId(prevId => (prevId === fileId ? null : fileId));
-    setParentFolderId(parentFolderId);
+    setSelectedFileId(fileId);
+    setcreateFolder(null)
     if(type==1){
+      setParentFolderId(parentFolderId);
       setCurrentFolder(fileId)
     }
 
@@ -82,18 +95,28 @@ function SideBar() {
             <CreateNewFolderIcon className='cursor-pointer text-md' onClick={()=>
               {
                 setType('folder');
-                setcreateFolder(true)
+                setcreateFolder('folder')
+                console.log(parentFolderId)
               }
               }/>
-            <NoteAddIcon className='mx-2 cursor-pointer text-m' onClick={()=>setType('file')}/>
+            <NoteAddIcon className='mx-2 cursor-pointer text-m' onClick={()=>
+              {setType('file')
+              setcreateFolder('file')
+            }
+            }/>
         </div>
         </div>
         <hr/>
         <div className='my-4'>
         {
-          files ? <Files data={files} selectedFileId={selectedFileId} onSelect={handleFileClick} parentFolderId={parentFolderId} currentFolderId={currentFolderId} createfolder={createfolder} setFiles={setFiles}/>:
-          (type && <input className='mx-2 bg-slate-600 rounded-md p-1' placeholder={`${type === 'folder' ? 'Folder name' : ' File name'}`} onChange={(e:ChangeEvent<HTMLInputElement>) => setFileName(e.target.value)}
-          onKeyPress={handleKeyPress} />)
+          files ? <Files data={files} selectedFileId={selectedFileId} onSelect={handleFileClick} parentFolderId={parentFolderId} createfolder={createfolder} currentFolderId={currentFolderId}/>:
+          (type &&
+            <div className='mx-auto'>
+            <input className='mx-2 bg-slate-600 rounded-md p-1 w-3/4' placeholder={`${type === 'folder' ? 'Folder name' : ' File name'}`} onChange={(e:ChangeEvent<HTMLInputElement>) => setFileName(e.target.value)}
+          onKeyPress={handleKeyPress} />
+          <CloseIcon className='text-sm cursor-pointer' onClick={()=>setType(null)}/>
+          </div>
+          )
         }
         
         </div>

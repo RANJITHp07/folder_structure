@@ -1,7 +1,7 @@
-import { ObjectId, Types } from "mongoose";
 import { FileModel, IFile } from "../model/fileSchema";
 import { NextFunction, Request,Response } from "express";
 
+//to create a new folder or file
 export async function createFile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { name, type,extension} = req.body;
@@ -27,6 +27,8 @@ export async function createFile(req: Request, res: Response, next: NextFunction
     }
   }
 
+
+//to add a file or a folder 
 export async function addChildToFile(req:Request,res:Response,next:NextFunction): Promise<void> {
     try {
     const {fileId, name, type,extension}=req.body
@@ -46,38 +48,55 @@ export async function addChildToFile(req:Request,res:Response,next:NextFunction)
           res.status(200).json({
             message:'successfully created',
             success:true,
-            data:addChild
+            data:{
+              parent:fileId,
+              newFile
+            }
           })
+      }else{
+        res.status(400).json({
+          message:'unable to create children file',
+          success:false
+        })
       }
-
-      res.status(400).json({
-        message:'unable to create children file',
-        success:false
-      })
     } catch (err) {
       next(err)
     }
   }
 
+//to delete a child or child file  
 export async function removeChildFromFile(req:Request,res:Response,next:NextFunction): Promise<void> {
     try {
         const {fileId,childId}=req.body
      const deleteChild=await FileModel.findByIdAndUpdate(
         { _id: fileId },
-        { $pull: { children: childId } }
+        { $pull: { children: childId } },
+        {new:true}
       );
 
+      console.log(deleteChild);
       if(deleteChild){
+        const removeChild=await FileModel.findByIdAndDelete(childId)
+
+        removeChild?
         res.status(200).json({
           message:'successfully deleted',
-          success:true
+          success:true,
+          data:{
+            parent:fileId,
+            deleteChild,
+          }
+        }):
+        res.status(400).json({
+          message:'unable to delete the child file',
+          success:false
         })
+    }else{
+      res.status(400).json({
+        message:'unable to delete children file',
+        success:false
+      })
     }
-
-    res.status(400).json({
-      message:'unable to delete children file',
-      success:false
-    })
     } catch (err) {
         next(err)
     }
@@ -107,7 +126,7 @@ export async function getAllFiles(req: Request, res: Response, next: NextFunctio
             data: populatedFile
         }) :
         res.status(400).json({
-          message: 'successfully fetched',
+          message: 'failed to  fetch',
           success: false,
           data: null
       })
